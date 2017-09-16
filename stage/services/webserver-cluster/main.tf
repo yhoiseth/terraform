@@ -1,20 +1,6 @@
-terraform {
-  backend "s3" {
-    bucket = "yhoiseth-terraform-example-state"
-    key = "stage/services/webserver-cluster/terraform.tfstate"
-    region = "us-east-1"
-    encrypt = true
-  }
-}
-
 provider "aws" {
   region = "us-east-1"
   version = "~> 0.1"
-}
-
-variable "server_port" {
-  description = "The port for HTTP requests"
-  default = 8080
 }
 
 data "aws_availability_zones" "all" {}
@@ -105,8 +91,4 @@ resource "aws_autoscaling_group" "example" {
     propagate_at_launch = true
     value = "terraform-asg-example"
   }
-}
-
-output "elb_dns_name" {
-  value = "${aws_elb.example.dns_name}"
 }
