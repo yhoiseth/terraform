@@ -3,6 +3,14 @@ provider "aws" {
   version = "~> 0.1"
 }
 
+provider "terraform" {
+  version = "~> 1.0"
+}
+
+provider "template" {
+  version = "~> 0.1"
+}
+
 data "aws_availability_zones" "all" {}
 
 resource "aws_launch_configuration" "example" {
@@ -10,11 +18,7 @@ resource "aws_launch_configuration" "example" {
   instance_type = "t2.micro"
   security_groups = ["${aws_security_group.instance.id}"]
 
-  user_data = <<-EOF
-              #!/bin/bash
-              echo 'Hello, World!' > index.html
-              nohup busybox httpd -f -p ${var.server_port} &
-              EOF
+  user_data = "${data.template_file.user_data.rendered}"
 
   lifecycle {
     create_before_destroy = true
@@ -90,5 +94,25 @@ resource "aws_autoscaling_group" "example" {
     key = "Name"
     propagate_at_launch = true
     value = "terraform-asg-example"
+  }
+}
+
+data "terraform_remote_state" "db" {
+  backend = "s3"
+
+  config {
+    bucket = "yhoiseth-terraform-example-state"
+    key = "stage/data-stores/mysql/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
+data "template_file" "user_data" {
+  template = "${file("user-data.sh")}"
+
+  vars {
+    server_port = "${var.server_port}"
+    db_port = "${data.terraform_remote_state.db.port}"
+    db_address = "${data.terraform_remote_state.db.address}"
   }
 }
