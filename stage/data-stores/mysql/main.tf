@@ -10,4 +10,5 @@ resource "aws_db_instance" "example" {
   username = "admin"
   password = "${var.db_password}"
   instance_class = "db.t2.micro"
+  skip_final_snapshot = true
 }
